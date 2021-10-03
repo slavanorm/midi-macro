@@ -23,13 +23,14 @@ func must(err error) {
 }
 
 type key struct {
-	Name     string   `yaml:"name"`
-	Aliases  []string `yaml:"aliases,flow"`
-	Type     string   `yaml:"type"`
-	Task     string   `yaml:"task"`
-	MaxValue uint8    `yaml:"max_value"`
-	KeyUp    string   `yaml:"key_up"`
-	KeyDown  string   `yaml:"key_down"`
+	Name          string   `yaml:"name"`
+	Aliases       []string `yaml:"aliases,flow"`
+	Type          string   `yaml:"type"`
+	Task          string   `yaml:"task"`
+	MaxValue      uint8    `yaml:"max_value"`
+	KeyUp         string   `yaml:"key_up"`
+	KeyDown       string   `yaml:"key_down"`
+	KnobToIgnore  string   `yaml:"knob_to_ignore"`
 }
 
 type config struct {
@@ -38,6 +39,7 @@ type config struct {
 }
 
 var prev_values map[string]uint8
+var knobs_ignored map[string]bool
 
 func (c config) getKey(name string) (key, error) {
 	for _, key := range c.Keys {
@@ -78,6 +80,7 @@ func main() {
 	must(out.Open())
 
     prev_values = make(map[string]uint8)
+	knobs_ignored = make(map[string]bool)
 
 	rd := reader.New(
 		reader.NoLogger(),
@@ -115,6 +118,9 @@ func controlChangeHandler(midi_message ControlChange) {
 		fmt.Printf("Error getting key %s: %v\n", midi_key, err)
 		return
 	}
+	if knobs_ignored[midi_key] {
+		return
+	}
 
 	prev_value, has_prev := prev_values[key.Name]
 	if !has_prev { prev_value = midi_message.Value() }
@@ -141,11 +147,20 @@ func messageHandler(midi_message NoteOn) {
 		return
 	}
 
-	command := getCommand(key.Task)
-	name, args := command[0], command[1:]
+	if (key.Task == "ignore_knob") {
+		knob_to_ignore := key.KnobToIgnore
+		if knob_to_ignore == "" {
+			fmt.Printf("Task is ignore_knob, but knob_to_ignore not specified. Key %s\n", midi_key)
+			return
+		}
+		toggleIgnoreKnob(key)
+	} else {
+		command := getCommand(key.Task)
+		name, args := command[0], command[1:]
 
-	cmd := exec.Command(name, args...)
-	cmd.Run()
+		cmd := exec.Command(name, args...)
+		cmd.Run()
+	}
 }
 
 // YAML handler
@@ -199,4 +214,13 @@ func printInPorts(ports []midi.In) {
 		printPort(port)
 	}
 	fmt.Printf("\n\n")
+}
+
+func toggleIgnoreKnob(key key) {
+	_, was_ignored := knobs_ignored[key.KnobToIgnore]
+	if was_ignored {
+		delete(knobs_ignored, key.KnobToIgnore)
+	} else {
+		knobs_ignored[key.KnobToIgnore] = true
+	}
 }

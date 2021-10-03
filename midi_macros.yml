@@ -20,6 +20,9 @@ keys:
       task: ""
     - name: "43"
       task: ""
+    - name: "44"
+      task: "ignore_knob"
+      knob_to_ignore: "21" # Knob name to start ignoring, when pressed once. Press again to resume.
 
     # Knobs
     - name: "7"
