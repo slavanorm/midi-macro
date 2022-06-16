@@ -1,28 +1,47 @@
-midi-macro
-==========
+# midi-macro
 
 Use your MIDI controller (pads, knobs, sliders, keys etc.) to trigger macros.
 
-To build:
-`sudo apt-get install libasound2-dev`
-`go build -o midimacro midi-macro/*.go`
+## Usage
 
-Then:
-`./midimacro list`
+- Build binary (or get the pre-built binaries from the published [releases][releases])
+```
+go build -o $GOPATH/bin/midimacro midi-macro/*.go
+```
 
-Pick your device name from list. 
-Set its name to the config file, and point an environment variable to it: 
-`export MIDI_MACRO_PATH=/path/to/midi_macros.yml`
+- Usage doc for `midimacro` command
+```
+Tool to map macros to your MIDI controller
 
-And finally
-`./midimacro run`
+Usage:
+  midimacro [command]
 
-differences from master:
+Available Commands:
+  completion  generate the autocompletion script for the specified shell
+  help        Help about any command
+  list        List of connected devices
+  run         Run MIDI event listener
 
-main.go:
-naive refactor and changes to allow new functions in knobs.go file.
+Flags:
+  -h, --help   help for midimacro
 
-configs:
-i set it up to employ my useless OP-1 to use it instead of mouse with help of xdotools.
+Use "midimacro [command] --help" for more information about a command.
+```
 
-it sounds strange, but helps a lot against a ton of mouseclicking in VCV rack.
+- Pick your device from the list of connected device with the command below.
+```
+midimacro list
+```
+
+- Add the device to the configuration file (sample [here][config-file]), and point an environment variable to it
+```
+export MIDI_MACRO_PATH=/path/to/midi_macros.yml
+```
+
+- Run the executable binary
+```
+midimacro run
+```
+
+[releases]: https://github.com/vipul-sharma20/midi-macro/releases
+[config-file]: ./config/midi_macros.yml
